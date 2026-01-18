@@ -21,13 +21,18 @@ exports.createUser = async (req, res) => {
         if (!password) return res.status(400).json({ message: 'password is required.' });
 
         let existingUser = await User.findOne({ email });
+        let existingMobile = await User.findOne({ mobile });
 
         if (existingUser) {
             return res.status(409).json({
                 message: 'User already exists'
             });
         }
-
+        if (existingMobile) {
+            return res.status(409).json({
+                message: 'Mobile number already registered'
+            });
+        }
         existingUser = await User.create({
             firstname,
             lastname,
