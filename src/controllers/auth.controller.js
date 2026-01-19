@@ -2,7 +2,6 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const generateToken = require('../utils/generateToken');
 
-
 const generateOtp = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -57,6 +56,61 @@ exports.createUser = async (req, res) => {
     }
 };
 
+exports.loginWithPass = async (req, res) => {
+    console.log("Login Data from frontend ======>>>", req.body);
+
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password are required"
+            });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                message: "email is invalid"
+            });
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{3,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                message:
+                    "Password Must include uppercase, lowercase, number & special character"
+            });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email"
+            });
+        }
+
+        if (password !== user.password) {
+            return res.status(401).json({
+                message: "Invalid password"
+            });
+        }
+
+        const token = generateToken(user._id);
+
+        res.status(200).json({
+            message: "Login successful",
+            token,
+            user
+        });
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        res.status(500).json({
+            message: "Server ki ma ka plz restart server 3-4 times after that chodavo."
+        });
+    }
+};
 
 exports.sendOtp = async (req, res) => {
     console.log("Data from Frontend ======>>>", req.body);
