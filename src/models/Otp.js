@@ -20,7 +20,7 @@ const mongoose = require('mongoose');
 // );
 
 const otpSchema = new mongoose.Schema({
-    identifier: {
+    mobile: {
         type: String,
         required: true,
         index: true

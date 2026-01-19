@@ -116,20 +116,23 @@ exports.sendOtp = async (req, res) => {
     console.log("Data from Frontend ======>>>", req.body);
 
     try {
-        const { email, mobile } = req.body;
+        const { mobile } = req.body;
 
-        // Validate input
-        if (!email && !mobile) {
+        if (!mobile) {
             return res.status(400).json({
-                message: 'Email or Mobile is required.'
+                message: 'Mobile is required.'
             });
         }
 
-        // Use one identifier
-        const identifier = email || mobile;
+        const mobileRegex = /^[6-9]\d{9}$/;
 
-        // Check existing OTP
-        const existingOtp = await Otp.findOne({ identifier });
+        if (!mobileRegex.test(mobile)) {
+            return res.status(400).json({
+                message: "Invalid mobile number."
+            });
+        }
+
+        const existingOtp = await Otp.findOne({ mobile });
 
         if (existingOtp && existingOtp.expiresAt > new Date()) {
             return res.status(429).json({
@@ -137,19 +140,18 @@ exports.sendOtp = async (req, res) => {
             });
         }
 
-        // Remove old OTPs
-        await Otp.deleteMany({ identifier });
+        await Otp.deleteMany({ mobile });
 
         const otp = generateOtp();
         const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
         await Otp.create({
-            identifier,
+            mobile,
             otp,
             expiresAt
         });
 
-        console.log(`OTP for ${identifier}:`, otp);
+        console.log(`OTP for ${mobile}:`, otp);
 
         res.status(200).json({
             message: 'OTP sent successfully'
@@ -165,13 +167,13 @@ exports.sendOtp = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
     console.log("Data from Frontend verifyotp ====>>>", req.body)
     try {
-        const { identifier, otp } = req.body;
+        const { mobile, otp } = req.body;
 
-        if (!identifier || !otp) {
-            return res.status(400).json({ message: 'Identifier and OTP required' });
+        if (!mobile || !otp) {
+            return res.status(400).json({ message: 'Mobile and OTP required' });
         }
 
-        const otpRecord = await Otp.findOne({ identifier, otp });
+        const otpRecord = await Otp.findOne({ mobile, otp });
 
         if (!otpRecord) {
             return res.status(400).json({ message: 'Invalid OTP' });
@@ -182,25 +184,15 @@ exports.verifyOtp = async (req, res) => {
         }
 
         // Find user or create new one
-        let user = await User.findOne({
-            $or: [{ email: identifier }, { mobile: identifier }]
-        });
 
-        if (!user) {
-            user = await User.create({
-                // firstname: identifier,
-                // lastname: identifier,
-                email: identifier.includes('@') ? identifier : null,
-                mobile: identifier.includes('@') ? null : identifier,
-                isVerified: true
-            });
-        } else {
-            user.isVerified = true;
-            await user.save();
-        }
+        const user = await User.findOne({ mobile });
+
+        // let user = await User.findOne({
+        //     $or: [{ email: identifier }, { mobile: identifier }]
+        // });
 
         // Delete OTP after successful verification
-        await Otp.deleteMany({ identifier });
+        await Otp.deleteMany({ mobile });
         const token = generateToken(user._id);
         res.json({
             message: 'OTP verified successfully',
