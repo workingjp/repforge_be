@@ -1,10 +1,10 @@
 const Exercise = require('../models/exercise');
 const allExercises = require('../data/exercises.json');
 const featuredIds = require('../scripts/featuredExerciseIds');
+
 exports.sendExercisesOnce = async (req, res) => {
   try {
-    
-    // 1️⃣ Check if already seeded
+
     const existingCount = await Exercise.countDocuments();
     if (existingCount > 0) {
       return res.status(400).json({
@@ -12,8 +12,6 @@ exports.sendExercisesOnce = async (req, res) => {
       });
     }
 
-
-    // 2️⃣ Filter best 100
     const featuredExercises = allExercises
       .filter(ex => featuredIds.includes(ex.id))
       .map(ex => ({
@@ -21,7 +19,6 @@ exports.sendExercisesOnce = async (req, res) => {
         isFeatured: true
       }));
 
-    // 3️⃣ Insert into DB
     await Exercise.insertMany(featuredExercises);
 
     res.status(201).json({
@@ -30,10 +27,28 @@ exports.sendExercisesOnce = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Send error:', error);
+    console.error('Send error:', error);
     res.status(500).json({
       message: 'Sending failed',
       error: error.message
+    });
+  }
+};
+
+exports.getAllExercisesData = async (req, res) => {
+  try {
+    const { source, action } = req.body || {};
+    const exercises = await Exercise.find({}).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: 'Exercises fetched successfully',
+      data: exercises
+    });
+  } catch (err) {
+    console.log("Get All Exercise Error ==> ", err);
+    res.status(500).json({
+      message: 'Getting Data failed',
+      error: err.message
     });
   }
 };
