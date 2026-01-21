@@ -122,9 +122,9 @@ exports.automaticsplit = async (req, res) => {
 
     const SPLIT_MAP = {
       push: ['chest', 'shoulders', 'triceps'],
-      pull: ['back', 'biceps'],
+      pull: ['lats', 'biceps'],
       legs: ['quadriceps', 'hamstrings', 'glutes', 'calves'],
-      upper: ['chest', 'back', 'shoulders', 'biceps', 'triceps'],
+      upper: ['chest', 'lats', 'shoulders', 'biceps', 'triceps'],
       lower: ['quadriceps', 'hamstrings', 'glutes', 'calves']
     };
 
