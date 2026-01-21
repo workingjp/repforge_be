@@ -65,6 +65,7 @@ function trainingParams(ageGroup, gender) {
   }
 
   return {
+    sets: gender === 'male' ? 4 : 3,
     reps: '8-12',
     rest: '60-90 sec'
   };
